@@ -33,15 +33,15 @@ class wordpress::db {
 
   file { 'wordpress_sql_script':
     ensure   => file,
-    path     => '/opt/wordpress/setup_files/create_wordpress_db.sql',
+    path     => '/var/www/html/setup_files/create_wordpress_db.sql',
     content  => template('wordpress/create_wordpress_db.erb');
   }
 
   exec {
     'create_schema':
       path     => '/usr/bin:/usr/sbin:/bin',
-      command  => 'mysql -uroot <\
-                  /opt/wordpress/setup_files/create_wordpress_db.sql',
+      command  => "mysql -uroot -p <\
+                  /opt/wordpress/setup_files/create_wordpress_db.sql",
       unless   => "mysql -uroot -e \"use ${wordpress::db_name}\"",
       notify   => Exec['grant_privileges'],
       require  => [

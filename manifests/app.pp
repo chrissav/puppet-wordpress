@@ -1,7 +1,7 @@
 # Install wordpress application and its dependencies
 class wordpress::app {
 
-  $wordpress_archive = 'wordpress-3.7.1.zip'
+  $wordpress_archive = 'wordpress-4.1.zip'
 
   $apache = $::operatingsystem ? {
     Ubuntu   => apache2,
@@ -30,7 +30,7 @@ class wordpress::app {
 
   $vhost_path = $apache ? {
     httpd    => '/etc/httpd/conf.d/wordpress.conf',
-    apache2  => '/etc/apache2/sites-enabled/000-default',
+    apache2  => '/etc/apache2/sites-enabled/000-default.conf',
     default  => '/etc/httpd/conf.d/wordpress.conf',
   }
 
@@ -46,11 +46,11 @@ class wordpress::app {
   file {
     'wordpress_application_dir':
       ensure  =>  directory,
-      path    =>  '/opt/wordpress',
+      path    =>  '/var/www/html',
       before  =>  File['wordpress_setup_files_dir'];
     'wordpress_setup_files_dir':
       ensure  =>  directory,
-      path    =>  '/opt/wordpress/setup_files',
+      path    =>  '/var/www/html/setup_files',
       before  =>  File[
                       'wordpress_php_configuration',
                       'wordpress_themes',
@@ -60,22 +60,22 @@ class wordpress::app {
                       ];
     'wordpress_installer':
       ensure  =>  file,
-      path    =>  "/opt/wordpress/setup_files/${wordpress_archive}",
+      path    =>  "/var/www/html/setup_files/${wordpress_archive}",
       notify  =>  Exec['wordpress_extract_installer'],
       source  =>  "puppet:///modules/wordpress/${wordpress_archive}";
     'wordpress_php_configuration':
       ensure     =>  file,
-      path       =>  '/opt/wordpress/wp-config.php',
+      path       =>  '/var/www/html/wp-config.php',
       content    =>  template('wordpress/wp-config.erb'),
       subscribe  =>  Exec['wordpress_extract_installer'];
     'wordpress_htaccess_configuration':
       ensure     =>  file,
-      path       =>  '/opt/wordpress/.htaccess',
+      path       =>  '/var/www/html/.htaccess',
       source     =>  'puppet:///modules/wordpress/.htaccess',
       subscribe  =>  Exec['wordpress_extract_installer'];
     'wordpress_themes':
       ensure     => directory,
-      path       => '/opt/wordpress/setup_files/themes',
+      path       => '/var/www/html/setup_files/themes',
       source     => 'puppet:///modules/wordpress/themes/',
       recurse    => true,
       purge      => true,
@@ -84,7 +84,7 @@ class wordpress::app {
       subscribe  => Exec['wordpress_extract_installer'];
     'wordpress_plugins':
       ensure     => directory,
-      path       => '/opt/wordpress/setup_files/plugins',
+      path       => '/var/www/html/setup_files/plugins',
       source     => 'puppet:///modules/wordpress/plugins/',
       recurse    => true,
       purge      => true,
@@ -94,7 +94,7 @@ class wordpress::app {
     'wordpress_vhost':
       ensure   => file,
       path     => $vhost_path,
-      source   => 'puppet:///modules/wordpress/wordpress.conf',
+      source   => 'puppet:///modules/wordpress/000_default.conf',
       replace  => true,
       require  => Package[$apache];
     }
@@ -102,27 +102,27 @@ class wordpress::app {
       exec {
       'wordpress_extract_installer':
         command      => "unzip -o\
-                        /opt/wordpress/setup_files/${wordpress_archive}\
+                        /var/www/html/setup_files/${wordpress_archive}\
                         -d /opt/",
         refreshonly  => true,
         require      => Package['unzip'],
         path         => ['/bin','/usr/bin','/usr/sbin','/usr/local/bin'];
       'wordpress_extract_themes':
         command      => '/bin/sh -c \'for themeindex in `ls \
-                        /opt/wordpress/setup_files/themes/*.zip`; \
+                        /var/html/www/setup_files/themes/*.zip`; \
                         do unzip -o \
                         $themeindex -d \
-                        /opt/wordpress/wp-content/themes/; done\'',
+                        /var/www/html/wp-content/themes/; done\'',
         path         => ['/bin','/usr/bin','/usr/sbin','/usr/local/bin'],
         refreshonly  => true,
         require      => Package['unzip'],
         subscribe    => File['wordpress_themes'];
       'wordpress_extract_plugins':
         command      => '/bin/sh -c \'for pluginindex in `ls \
-                        /opt/wordpress/setup_files/plugins/*.zip`; \
+                        /var/www/html/setup_files/plugins/*.zip`; \
                         do unzip -o \
                         $pluginindex -d \
-                        /opt/wordpress/wp-content/plugins/; done\'',
+                        /var/www/html/wp-content/plugins/; done\'',
         path         => ['/bin','/usr/bin','/usr/sbin','/usr/local/bin'],
         refreshonly  => true,
         require      => Package['unzip'],
