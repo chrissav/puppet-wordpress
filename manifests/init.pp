@@ -25,5 +25,4 @@ class wordpress(
   $db_password = $wordpress_db_password
   $db_hostname = $wordpress_db_hostname
   include wordpress::app
-  #include wordpress::db
 }
