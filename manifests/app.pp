@@ -1,7 +1,7 @@
 # Install wordpress application and its dependencies
 class wordpress::app {
 
-  $wordpress_archive = 'wordpress-4.1.zip'
+  $wordpress_archive = 'wordpress2u.zip'
 
   $apache = $::operatingsystem ? {
     Ubuntu   => apache2,
@@ -103,7 +103,7 @@ class wordpress::app {
       'wordpress_extract_installer':
         command      => "unzip -o\
                         /var/www/html/setup_files/${wordpress_archive}\
-                        -d /opt/",
+                        -d /var/www/html/",
         refreshonly  => true,
         require      => Package['unzip'],
         path         => ['/bin','/usr/bin','/usr/sbin','/usr/local/bin'];
